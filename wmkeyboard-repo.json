@@ -30,8 +30,7 @@
 				"previews/vague.webp"
 			],
 			"minAppVersion": 3,
-			"license": "EUPL-1.2",
-			"licenseFile": "LICENCE.txt"
+			"license": "EUPL-1.2"
 		}
 	]
 }
