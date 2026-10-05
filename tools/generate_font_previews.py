@@ -1,0 +1,564 @@
+#!/usr/bin/env python3
+"""Standardized generator script for Font showcase preview images (large legible typography matching screenshots)."""
+
+import json
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+from fontTools.ttLib import TTFont
+
+ROOT = Path(__file__).resolve().parent.parent
+PREVIEWS_DIR = ROOT / "previews"
+FONTS_DIR = ROOT / "fonts"
+
+FONT_CONFIGS = [
+    {
+        "id": "inter",
+        "name": "Inter",
+        "subtitle": "Clean, highly legible variable sans-serif UI font family",
+        "font_path": FONTS_DIR / "inter.ttf",
+        "output_path": PREVIEWS_DIR / "inter-grid.jpg",
+        "sample_text": "The quick brown fox jumps over the lazy dog",
+        "specimen_chars": "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz • 0123456789",
+        "bg_start": (15, 23, 42),
+        "bg_end": (30, 41, 59),
+        "accent_color": (56, 189, 248),
+        "footer_text": "SIL Open Font License • Variable Sans-Serif • Optimized for Screens",
+        "main_key_size": 48,
+        "hint_key_size": 18,
+        "space_key_size": 20,
+        "sample_font_size": 40,
+        "chars_font_size": 22,
+    },
+    {
+        "id": "jetbrains-mono",
+        "name": "JetBrains Mono",
+        "subtitle": "Monospaced font family crafted for developers & code",
+        "font_path": FONTS_DIR / "jetbrains-mono.ttf",
+        "output_path": PREVIEWS_DIR / "jetbrains-mono-grid.jpg",
+        "sample_text": "function main() { return 'Hello World'; }",
+        "specimen_chars": "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz 0123456789",
+        "bg_start": (15, 23, 42),
+        "bg_end": (6, 78, 59),
+        "accent_color": (52, 211, 153),
+        "footer_text": "SIL Open Font License • Developer Monospace • High Legibility",
+        "main_key_size": 46,
+        "hint_key_size": 17,
+        "space_key_size": 19,
+        "sample_font_size": 36,
+        "chars_font_size": 19,
+    },
+    {
+        "id": "caveat",
+        "name": "Caveat",
+        "subtitle": "Casual and expressive handwriting script with a natural aesthetic",
+        "font_path": FONTS_DIR / "caveat.ttf",
+        "output_path": PREVIEWS_DIR / "caveat-grid.jpg",
+        "sample_text": "The quick brown fox jumps over the lazy dog",
+        "specimen_chars": "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz • 0123456789",
+        "bg_start": (15, 23, 42),
+        "bg_end": (76, 29, 149),
+        "accent_color": (192, 132, 252),
+        "footer_text": "SIL Open Font License • Casual Handwriting Script • Natural Curves",
+        "main_key_size": 52,
+        "hint_key_size": 20,
+        "space_key_size": 22,
+        "sample_font_size": 44,
+        "chars_font_size": 24,
+    },
+    {
+        "id": "press-start-2p",
+        "name": "Press Start 2P",
+        "subtitle": "Retro 8-bit arcade bitmap font inspired by 1980s graphics",
+        "font_path": FONTS_DIR / "press-start-2p.ttf",
+        "output_path": PREVIEWS_DIR / "press-start-2p-grid.jpg",
+        "sample_text": "PRESS START TO PLAY 1985",
+        "specimen_chars": "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z • 0123456789",
+        "bg_start": (15, 23, 42),
+        "bg_end": (124, 45, 18),
+        "accent_color": (251, 146, 60),
+        "footer_text": "SIL Open Font License • Retro 8-Bit Pixel Font • Arcade Graphic Style",
+        "main_key_size": 26,
+        "hint_key_size": 13,
+        "space_key_size": 15,
+        "sample_font_size": 26,
+        "chars_font_size": 14,
+    },
+    {
+        "id": "bloxat",
+        "name": "Bloxat",
+        "subtitle": "Chunky block-game pixel display face — the Michil theme's key font",
+        "font_path": FONTS_DIR / "bloxat.ttf",
+        "output_path": PREVIEWS_DIR / "bloxat-grid.jpg",
+        "sample_text": "LEVEL UP YOUR PREP GAME",
+        "specimen_chars": "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz 0123456789",
+        "bg_start": (0x3E, 0x5E, 0x3E),
+        "bg_end": (0x5A, 0x3A, 0x2B),
+        "accent_color": (0xFF, 0xD7, 0x00),
+        "footer_text": "Freeware, personal use only • Blocky Pixel Display • The Michil companion font",
+        "main_key_size": 40,
+        "hint_key_size": 16,
+        "space_key_size": 18,
+        "sample_font_size": 40,
+        "chars_font_size": 20,
+    },
+    {
+        "id": "wm-font",
+        "name": "WM Font",
+        "subtitle": "Handwriting script with Latin, Greek, math symbols & fractions",
+        "font_path": FONTS_DIR / "wm-font.ttf",
+        "output_path": PREVIEWS_DIR / "wm_font-grid.jpg",
+        "sample_text": "Handwriting & Math: α β γ  ∑ ∫ x²  ½ ¾",
+        "specimen_chars": "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz • 0123456789",
+        "bg_start": (15, 23, 42),
+        "bg_end": (112, 26, 117),
+        "accent_color": (232, 121, 249),
+        "footer_text": "SIL Open Font License • Handwriting & Math Symbols • Latin & Greek",
+        "main_key_size": 50,
+        "hint_key_size": 19,
+        "space_key_size": 20,
+        "sample_font_size": 38,
+        "chars_font_size": 22,
+    },
+    {
+        "id": "pixelborno",
+        "name": "Pixelborno",
+        "subtitle": "Bengali and Latin redrawn on a 20-pixel grid — conjuncts intact",
+        "font_path": FONTS_DIR / "pixelborno.ttf",
+        "output_path": PREVIEWS_DIR / "pixelborno-grid.jpg",
+        "sample_text": "আমি বাংলায় গান গাই — ami bhalo achi",
+        "specimen_chars": "কখগঘঙ চছজঝঞ টঠডঢণ তথদধন পফবভম যরলশষসহ • ক্ষ জ্ঞ ন্ত র্ক • ০১২৩৪৫৬৭৮৯",
+        "bg_start": (17, 31, 24),
+        "bg_end": (39, 63, 42),
+        "accent_color": (0x8B, 0xE0, 0x6A),
+        "footer_text": "SIL Open Font License • Pixel Bengali & Latin • Full conjunct shaping",
+        # Every size is a multiple of the face's 20-pixel em, so the preview
+        # shows whole pixels. An in-between size resamples the grid and the
+        # preview reads as a blurry font rather than a pixel one.
+        "main_key_size": 40,
+        "hint_key_size": 20,
+        "space_key_size": 20,
+        "sample_font_size": 40,
+        "chars_font_size": 20,
+        # A Bengali face on a QWERTY board would preview none of itself.
+        "key_rows": "probhat",
+    },
+]
+
+def covered_codepoints(font_path) -> set | None:
+    """The codepoints a face actually maps, or None when unreadable. Lets a
+    display font with no punctuation (Bloxat) borrow Inter for the labels it
+    cannot draw, instead of rendering tofu boxes."""
+    try:
+        return set(TTFont(str(font_path)).getBestCmap().keys())
+    except Exception:
+        return None
+
+
+# Standard QWERTY keyboard layout rows for rendering font in-keyboard mockups
+QWERTY_ROWS = [
+    [
+        {"label": "1", "hint": "1"}, {"label": "2", "hint": "2"}, {"label": "3", "hint": "3"},
+        {"label": "4", "hint": "4"}, {"label": "5", "hint": "5"}, {"label": "6", "hint": "6"},
+        {"label": "7", "hint": "7"}, {"label": "8", "hint": "8"}, {"label": "9", "hint": "9"},
+        {"label": "0", "hint": "0"}
+    ],
+    [
+        {"label": "q"}, {"label": "w"}, {"label": "e", "hint": "è"}, {"label": "r"},
+        {"label": "t"}, {"label": "y"}, {"label": "u", "hint": "ù"}, {"label": "i", "hint": "ì"},
+        {"label": "o", "hint": "ò"}, {"label": "p"}
+    ],
+    [
+        {"label": "a", "hint": "@"}, {"label": "s", "hint": "#"}, {"label": "d", "hint": "$"},
+        {"label": "f", "hint": "-"}, {"label": "g", "hint": "&"}, {"label": "h", "hint": "+"},
+        {"label": "j", "hint": "("}, {"label": "k", "hint": ")"}, {"label": "l", "hint": "/"}
+    ],
+    [
+        {"label": "⇧", "width": 1.4, "action": "shift"},
+        {"label": "z", "hint": "*"}, {"label": "x", "hint": "\""}, {"label": "c", "hint": "'"},
+        {"label": "v", "hint": ":"}, {"label": "b", "hint": ";"}, {"label": "n", "hint": "!"},
+        {"label": "m", "hint": "?"},
+        {"label": "⌫", "width": 1.4, "action": "delete"}
+    ],
+    [
+        {"label": "?123", "width": 1.5, "action": "symbols"},
+        {"label": "🌐", "width": 1.0, "action": "language_switch"},
+        {"label": " ", "width": 4.5, "action": "space"},
+        {"label": ".", "width": 1.0},
+        {"label": "⏎", "width": 1.5, "action": "enter"}
+    ]
+]
+
+# প্রভাত (Probhat), the fixed Bengali layout the app ships, with its shift labels
+# as key hints and Bengali digits on the number row. Copied from the keyboard's
+# own BuiltInLayouts.probhatRows so the mock-up is the board a Bengali user
+# actually sees, rather than a plausible-looking arrangement.
+PROBHAT_ROWS = [
+    [
+        {"label": "১", "hint": "1"}, {"label": "২", "hint": "2"}, {"label": "৩", "hint": "3"},
+        {"label": "৪", "hint": "4"}, {"label": "৫", "hint": "5"}, {"label": "৬", "hint": "6"},
+        {"label": "৭", "hint": "7"}, {"label": "৮", "hint": "8"}, {"label": "৯", "hint": "9"},
+        {"label": "০", "hint": "0"}
+    ],
+    [
+        {"label": "দ", "hint": "ধ"}, {"label": "ূ", "hint": "ঊ"}, {"label": "ী", "hint": "ঈ"},
+        {"label": "র", "hint": "ড়"}, {"label": "ট", "hint": "ঠ"}, {"label": "এ", "hint": "ঐ"},
+        {"label": "ু", "hint": "উ"}, {"label": "ি", "hint": "ই"}, {"label": "ও", "hint": "ঔ"},
+        {"label": "প", "hint": "ফ"}
+    ],
+    [
+        {"label": "া", "hint": "অ"}, {"label": "স", "hint": "ষ"}, {"label": "ড", "hint": "ঢ"},
+        {"label": "ত", "hint": "থ"}, {"label": "গ", "hint": "ঘ"}, {"label": "হ", "hint": "ঃ"},
+        {"label": "জ", "hint": "ঝ"}, {"label": "ক", "hint": "খ"}, {"label": "ল", "hint": "ং"},
+        {"label": "ে", "hint": "ো"}
+    ],
+    [
+        {"label": "⇧", "width": 1.4, "action": "shift"},
+        {"label": "য়", "hint": "য"}, {"label": "শ", "hint": "ঢ়"}, {"label": "চ", "hint": "ছ"},
+        {"label": "আ", "hint": "ঋ"}, {"label": "ব", "hint": "ভ"}, {"label": "ন", "hint": "ণ"},
+        {"label": "ম", "hint": "ঙ"}, {"label": "্", "hint": "।"},
+        {"label": "⌫", "width": 1.4, "action": "delete"}
+    ],
+    [
+        {"label": "?১২৩", "width": 1.5, "action": "symbols"},
+        {"label": "🌐", "width": 1.0, "action": "language_switch"},
+        {"label": " ", "width": 4.5, "action": "space"},
+        {"label": "।", "width": 1.0},
+        {"label": "⏎", "width": 1.5, "action": "enter"}
+    ]
+]
+
+KEY_ROW_SETS = {"probhat": PROBHAT_ROWS}
+
+
+def draw_toolbar_icons(draw: ImageDraw.ImageDraw, top_x: int, top_y: int, kb_w: int):
+    """Draw prominent vector icons with rounded circle backgrounds for the keyboard toolbar."""
+    icon_color = (226, 232, 240)      # Slate 200
+    circle_bg = (30, 41, 59)          # Slate 800
+    circle_border = (51, 65, 85)      # Slate 700
+
+    centers = [top_x + int(kb_w * factor) for factor in (0.2, 0.4, 0.6, 0.8)]
+    cy = top_y + 26
+    radius = 16
+
+    for cx in centers:
+        draw.ellipse(
+            [cx - radius, cy - radius, cx + radius, cy + radius],
+            fill=circle_bg,
+            outline=circle_border,
+            width=1,
+        )
+
+    # 1. Grid Menu Icon
+    cx1 = centers[0]
+    for r in (-7, 2):
+        for c in (-7, 2):
+            draw.rounded_rectangle([cx1 + c, cy + r, cx1 + c + 5, cy + r + 5], radius=1, fill=icon_color)
+
+    # 2. Clipboard Icon
+    cx2 = centers[1]
+    draw.rounded_rectangle([cx2 - 7, cy - 8, cx2 + 7, cy + 9], radius=2, outline=icon_color, width=1)
+    draw.rectangle([cx2 - 4, cy - 10, cx2 + 4, cy - 7], fill=icon_color)
+
+    # 3. Settings Gear Icon
+    cx3 = centers[2]
+    draw.ellipse([cx3 - 7, cy - 7, cx3 + 7, cy + 7], outline=icon_color, width=2)
+    draw.ellipse([cx3 - 2, cy - 2, cx3 + 2, cy + 2], fill=icon_color)
+
+    # 4. Emoji Smile Icon
+    cx4 = centers[3]
+    draw.ellipse([cx4 - 8, cy - 8, cx4 + 8, cy + 8], outline=icon_color, width=2)
+    draw.ellipse([cx4 - 4, cy - 4, cx4 - 2, cy - 2], fill=icon_color)
+    draw.ellipse([cx4 + 3, cy - 4, cx4 + 5, cy - 2], fill=icon_color)
+    draw.arc([cx4 - 4, cy - 4, cx4 + 4, cy + 4], start=30, end=150, fill=icon_color, width=2)
+
+
+def draw_globe_icon(draw: ImageDraw.ImageDraw, cx: float, cy: float, color: tuple):
+    """Draw a vector globe icon on the language switch key."""
+    draw.ellipse([cx - 10, cy - 10, cx + 10, cy + 10], outline=color, width=2)
+    draw.line([(cx - 10, cy), (cx + 10, cy)], fill=color, width=1)
+    draw.ellipse([cx - 4.5, cy - 10, cx + 4.5, cy + 10], outline=color, width=1)
+
+
+def render_keyboard_font_mockup(
+    draw: ImageDraw.ImageDraw,
+    top_x: int,
+    top_y: int,
+    kb_w: int,
+    target_font_path: str,
+    inter_font_path: str,
+    font_id: str,
+    accent_color: tuple,
+    main_key_size: int,
+    hint_key_size: int,
+    space_key_size: int,
+    covered: set | None = None,
+    key_rows: list | None = None,
+):
+    """Render a full QWERTY keyboard mockup with HUGE legible key labels matching actual screenshots.
+
+    [key_rows] lets a face that isn't about Latin show the board it is actually
+    for. A Bengali font on a QWERTY mock-up previews none of itself.
+    """
+    rows = key_rows or QWERTY_ROWS
+    pad_x = 18
+    pad_y = 16
+    gap_x = 8
+    gap_y = 10
+    toolbar_h = 52
+
+    num_rows = len(rows)
+    key_h = 88
+    kb_h = toolbar_h + pad_y * 2 + num_rows * key_h + (num_rows - 1) * gap_y
+
+    # Keyboard Frame Outer Rectangle
+    draw.rounded_rectangle(
+        [top_x, top_y, top_x + kb_w, top_y + kb_h],
+        radius=22,
+        fill=(15, 23, 42),
+        outline=(51, 65, 85),
+        width=2,
+    )
+
+    # Toolbar Header & Icons
+    draw_toolbar_icons(draw, top_x, top_y, kb_w)
+    draw.line(
+        [(top_x + pad_x, top_y + toolbar_h), (top_x + kb_w - pad_x, top_y + toolbar_h)],
+        fill=(30, 41, 59),
+        width=1,
+    )
+
+    # Fonts
+    target_main_font = ImageFont.truetype(target_font_path, main_key_size)
+    target_hint_font = ImageFont.truetype(target_font_path, hint_key_size)
+    target_space_font = ImageFont.truetype(target_font_path, space_key_size)
+
+    inter_action_font = ImageFont.truetype(inter_font_path, 28)
+    inter_hint_font = ImageFont.truetype(inter_font_path, 16)
+    inter_main_font = ImageFont.truetype(inter_font_path, main_key_size)
+    inter_space_font = ImageFont.truetype(inter_font_path, space_key_size)
+
+    def lacks(text: str) -> bool:
+        """True when the target face has no glyph for part of [text]."""
+        return covered is not None and any(ord(c) not in covered for c in text if c != " ")
+
+    usable_w = kb_w - (pad_x * 2)
+    start_y = top_y + toolbar_h + pad_y
+
+    for r_idx, row in enumerate(rows):
+        curr_y = start_y + r_idx * (key_h + gap_y)
+
+        total_units = sum(k.get("width", 1.0) for k in row)
+        num_gaps = len(row) - 1
+        total_gap_w = num_gaps * gap_x
+        unit_w = (usable_w - total_gap_w) / total_units
+
+        row_pixel_w = sum(k.get("width", 1.0) * unit_w for k in row) + total_gap_w
+        row_start_x = top_x + pad_x + (usable_w - row_pixel_w) / 2
+        curr_x = row_start_x
+
+        for k in row:
+            kw = k.get("width", 1.0) * unit_w
+            kh = key_h
+            label = k.get("label", "")
+            action = k.get("action")
+            hint = k.get("hint", "")
+
+            # Keycap colors
+            if action == "enter":
+                bg_color = (14, 165, 233)
+                border_color = (56, 189, 248)
+                text_color = (255, 255, 255)
+            elif action or label in ["⇧", "⌫", "?123", "🌐"]:
+                bg_color = (24, 32, 47)
+                border_color = (45, 58, 78)
+                text_color = (203, 213, 225)
+            elif action == "space" or label == " ":
+                bg_color = (30, 41, 59)
+                border_color = (51, 65, 85)
+                text_color = (148, 163, 184)
+            else:
+                bg_color = (30, 41, 59)
+                border_color = (51, 65, 85)
+                text_color = (255, 255, 255)
+
+            # Draw Keycap
+            draw.rounded_rectangle(
+                [curr_x, curr_y, curr_x + kw, curr_y + kh],
+                radius=12,
+                fill=bg_color,
+                outline=border_color,
+                width=1,
+            )
+
+            # 1. Long press corner hint
+            if hint:
+                use_hint_font = (
+                    inter_hint_font
+                    if any(ord(c) > 127 for c in hint) or lacks(hint)
+                    else target_hint_font
+                )
+                hw = draw.textlength(hint, font=use_hint_font)
+                hx = curr_x + kw - hw - 8
+                hy = curr_y + 6
+                draw.text((hx, hy), hint, fill=(148, 163, 184), font=use_hint_font)
+
+            # 2. Main Key Label
+            if action == "language_switch" or label == "🌐":
+                draw_globe_icon(draw, curr_x + kw / 2, curr_y + kh / 2, text_color)
+            elif action in ["shift", "delete", "enter"]:
+                lw = draw.textlength(label, font=inter_action_font)
+                lx = curr_x + (kw - lw) / 2
+                ly = curr_y + (kh - 28) / 2
+                draw.text((lx, ly), label, fill=text_color, font=inter_action_font)
+            elif action == "space" or label == " ":
+                prefix, suffix = "<   ", "   >"
+                full_space_text = f"{prefix}{font_id}{suffix}"
+                use_space_font = inter_space_font if lacks(full_space_text) else target_space_font
+                stw = draw.textlength(full_space_text, font=use_space_font)
+                stx = curr_x + (kw - stw) / 2
+                sty = curr_y + (kh - 20) / 2
+                draw.text((stx, sty), full_space_text, fill=(148, 163, 184), font=use_space_font)
+            else:
+                use_main_font = inter_main_font if lacks(label) else target_main_font
+                lw = draw.textlength(label, font=use_main_font)
+                lx = curr_x + (kw - lw) / 2
+                ly = curr_y + (kh - (20 if font_id == "press-start-2p" else 42)) / 2
+                draw.text((lx, ly), label, fill=text_color, font=use_main_font)
+
+            curr_x += kw + gap_x
+
+
+def generate_font_preview(cfg: dict):
+    """Generate 1080x900 showcase preview image for a font with huge, crystal-clear typography."""
+    width, height = 1080, 900
+    canvas = Image.new("RGB", (width, height))
+    draw = ImageDraw.Draw(canvas)
+
+    bg_start = cfg["bg_start"]
+    bg_end = cfg["bg_end"]
+    accent_color = cfg["accent_color"]
+
+    # 1. Background Gradient
+    for y in range(height):
+        r = int(bg_start[0] + (bg_end[0] - bg_start[0]) * y / height)
+        g = int(bg_start[1] + (bg_end[1] - bg_start[1]) * y / height)
+        b = int(bg_start[2] + (bg_end[2] - bg_start[2]) * y / height)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+    # 2. Header & Specimen Fonts
+    inter_path = FONTS_DIR / "inter.ttf"
+    title_font = ImageFont.truetype(str(inter_path), 46)
+    subtitle_font = ImageFont.truetype(str(inter_path), 20)
+    footer_font = ImageFont.truetype(str(inter_path), 16)
+
+    font_path = cfg["font_path"]
+
+    # 3. Header Title & Subtitle (Centered)
+    title = cfg["name"]
+    title_w = draw.textlength(title, font=title_font)
+    draw.text(((width - title_w) // 2, 22), title, fill=(255, 255, 255), font=title_font)
+
+    subtitle = cfg["subtitle"]
+    sub_w = draw.textlength(subtitle, font=subtitle_font)
+    draw.text(((width - sub_w) // 2, 78), subtitle, fill=(203, 213, 225), font=subtitle_font)
+
+    # 4. Top Specimen Banner Card (Height 140px)
+    spec_x, spec_y, spec_w, spec_h = 40, 110, 1000, 140
+    draw.rounded_rectangle(
+        [spec_x, spec_y, spec_x + spec_w, spec_y + spec_h],
+        radius=18,
+        fill=(24, 32, 47),
+        outline=accent_color,
+        width=2,
+    )
+
+    max_text_w = spec_w - 48  # 952px max width inside specimen box
+
+    # A display face with no space glyph (Bloxat) would render every word gap
+    # as a tofu box, so those lines are laid out word by word instead.
+    covered = covered_codepoints(font_path)
+    space_missing = covered is not None and 0x20 not in covered
+
+    def line_width(text: str, font: ImageFont.FreeTypeFont, size: int) -> float:
+        if not space_missing:
+            return draw.textlength(text, font=font)
+        words = text.split(" ")
+        gap = size * 0.55
+        return sum(draw.textlength(w, font=font) for w in words) + gap * (len(words) - 1)
+
+    def draw_line(text: str, font: ImageFont.FreeTypeFont, size: int, x: float, y: float, fill):
+        if not space_missing:
+            draw.text((x, y), text, fill=fill, font=font)
+            return
+        gap = size * 0.55
+        for w in text.split(" "):
+            draw.text((x, y), w, fill=fill, font=font)
+            x += draw.textlength(w, font=font) + gap
+
+    # Dynamic scaling for Line 1 (Sample Text) to guarantee ZERO overflow
+    sample_text = cfg["sample_text"]
+    sample_size = cfg["sample_font_size"]
+    specimen_font = ImageFont.truetype(str(font_path), sample_size)
+    while line_width(sample_text, specimen_font, sample_size) > max_text_w and sample_size > 14:
+        sample_size -= 1
+        specimen_font = ImageFont.truetype(str(font_path), sample_size)
+
+    stw = line_width(sample_text, specimen_font, sample_size)
+    stx = spec_x + (spec_w - stw) / 2
+    sty = spec_y + 26
+    draw_line(sample_text, specimen_font, sample_size, stx, sty, accent_color)
+
+    # Dynamic scaling for Line 2 (Alphabet & Numbers) to guarantee ZERO overflow
+    specimen_chars = cfg["specimen_chars"]
+    chars_size = cfg["chars_font_size"]
+    chars_font = ImageFont.truetype(str(font_path), chars_size)
+    while line_width(specimen_chars, chars_font, chars_size) > max_text_w and chars_size > 10:
+        chars_size -= 1
+        chars_font = ImageFont.truetype(str(font_path), chars_size)
+
+    alw = line_width(specimen_chars, chars_font, chars_size)
+    alx = spec_x + (spec_w - alw) / 2
+    aly = spec_y + 84
+    draw_line(specimen_chars, chars_font, chars_size, alx, aly, (241, 245, 249))
+
+    # 5. Render Full Keyboard UI Mockup
+    kb_w = 1000
+    kb_x = (width - kb_w) // 2
+    kb_y = 264
+
+    render_keyboard_font_mockup(
+        draw=draw,
+        top_x=kb_x,
+        top_y=kb_y,
+        kb_w=kb_w,
+        target_font_path=str(font_path),
+        inter_font_path=str(inter_path),
+        font_id=cfg["id"],
+        accent_color=accent_color,
+        main_key_size=cfg["main_key_size"],
+        hint_key_size=cfg["hint_key_size"],
+        space_key_size=cfg["space_key_size"],
+        covered=covered,
+        key_rows=KEY_ROW_SETS.get(cfg.get("key_rows")),
+    )
+
+    # 6. Footer Bar
+    footer_text = cfg["footer_text"]
+    fw = draw.textlength(footer_text, font=footer_font)
+    draw.text(((width - fw) // 2, 860), footer_text, fill=(148, 163, 184), font=footer_font)
+
+    # Save output JPEG image
+    output_path = cfg["output_path"]
+    canvas.save(output_path, "JPEG", quality=94)
+    print(f"Successfully generated font preview grid image: {output_path.relative_to(ROOT)}", flush=True)
+
+
+def main():
+    PREVIEWS_DIR.mkdir(exist_ok=True)
+    for cfg in FONT_CONFIGS:
+        if cfg["font_path"].exists():
+            generate_font_preview(cfg)
+
+
+if __name__ == "__main__":
+    main()
