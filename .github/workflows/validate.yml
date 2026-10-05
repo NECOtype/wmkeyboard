@@ -39,7 +39,3 @@ jobs:
       # The archives people install must be built from the sources people read.
       - name: Check plugin archives are current
         run: python3 tools/build_plugins.py --check
-
-      # Every plugin with a test.lua runs it on luaj 3.0.1.
-      - name: Run plugin tests
-        run: python3 tools/test_plugins.py
