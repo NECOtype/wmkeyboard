@@ -1,0 +1,37 @@
+{
+	"$schema": "https://raw.githubusercontent.com/wasi-master/wmkeyboard-addon-repository/main/docs/addons/wmkeyboard-repo.schema.json",
+	"format": "wmkeyboard-repo",
+	"version": 1,
+	"repo": {
+		"id": "tf.necodes.wmkeyboard",
+		"name": "NECOdes' WM Keyboard Addons",
+		"description": "this is fine too...",
+		"author": "NECOdes",
+		"homepage": "https://github.com/NECOtype/wmkeyboard",
+		"icon": "https://avatars.githubusercontent.com/u/89935904?v=4",
+		"updatedAt": "2026-10-05"
+	},
+	"addons": [
+		{
+			"id": "vague",
+			"type": "theme",
+			"name": "Vague",
+			"version": "1.0.0",
+			"author": "NECOdes",
+			"description": "Unofficial of Vague theme: A cool, dark, low contrast colorscheme. Pastel yet vivid, like a fleeting memory...",
+			"tags": [
+				"retro",
+				"dark"
+			],
+			"path": "themes/vague.wmtheme.json",
+			"sha256": "7bca71a3e25b3bcbdfc7d77851efac38507bfdef0d27a0e882c84c240dd0feda",
+			"sizeBytes": 2639,
+			"previews": [
+				"previews/vague.webp"
+			],
+			"minAppVersion": 3,
+			"license": "EUPL-1.2",
+			"licenseFile": "LICENCE.txt"
+		}
+	]
+}
