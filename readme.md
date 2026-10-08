@@ -1,6 +1,6 @@
 <table>
     <tr>
-        <th>Vague colors</th>
+        <th colspan="2">Vague colors</th>
     </tr>
     <tr>
         <td>
